@@ -1,0 +1,83 @@
+---
+title: "Assingment NYC Flight Data"
+author: "Beatrice Wee"
+date: "April 8, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## NYC Flight Data
+
+Your job is to create a "rectangular" table useful for modeling from flight data. 
+In the folder `02-fundamentals/data` there are four CSV files: `flights.csv`, 
+`airports.csv`, `planes.csv` and `weather.csv`.  Join/merge these tables such 
+that there is one rectangular table with one row for each flight. 
+
+
+Put code in each of the sections provided.
+
+## 1. Read Data
+
+Using the `readr` package read the `flights` data.
+
+```{r}
+flights <- read.csv("flights.csv")
+head (flights)
+tail (flights)
+summary (flights)
+str(flights)
+```
+
+## Numeric Variables  
+
+Plot a histogram of arrival delays and departure delays 
+
+```{r}
+library(ggplot2)
+x <- flights["arr_delay"] + flights["dep_delay"]
+flights$totaldelay <- x
+hist<- ggplot(data=flights, aes(x)) + geom_histogram(breaks=seq(2, 200, by =2), col = "grey", fill="steelblue")
+hist
+```
+
+## Scatterplot
+
+Plot a scatterplot of date vs arrival delay 
+
+```{r}
+library(ggplot2)
+library(lubridate)
+flights$date <- as.Date(with(flights, paste(year, month, day,sep="-")), "%Y-%m-%d")
+ggplot(flights, aes(flights$date, arr_delay))+ geom_point()
+
+```
+
+
+
+## Create tables for Categorical Variables
+
+Create a `table`, counting the flights by origin airports and carrier.
+
+```{r}
+a <- table(flights$origin)
+b <- table (flights$carrier)
+a.df <- as.data.frame(a)
+a.df
+b.df <- as.data.frame(b)
+b.df
+```
+
+
+## Join Data
+
+**Read** in the other data sets. Use methods to join the data together to create a single table containing one record per row.  (HINT: see `?data.table` or `?dplyr::join`)
+
+```{r}
+
+```
+
+
+
