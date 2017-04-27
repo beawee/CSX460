@@ -1,0 +1,122 @@
+---
+title: "Assingment NYC Flight Data"
+author: "beatrice wee"
+date: "April 19, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include=TRUE)
+```
+
+
+## NYC Flight Data
+
+Your job is to create a "rectangular" table useful for modeling from flight data. 
+In the folder `02-fundamentals/data` there are four CSV files: `flights.csv`, 
+`airports.csv`, `planes.csv` and `weather.csv`.  Join/merge these tables such 
+that there is one rectangular table with one row for each flight. 
+
+
+Put code in each of the sections provided.
+
+## 1. Read Data
+
+Using the `readr` package read the `flights` data.
+
+```{r}
+
+library(readr)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(magrittr)
+
+```{r} 
+
+airports <- read.csv("airports.csv") %>% setDT
+flights <- read_csv("flights.csv") %>% setDT
+planes <- read_csv("planes.csv") %>% setDT
+weather <- read_csv("weather.csv") %>% setDT
+
+head(airports)
+head(weather)
+head(flights)
+head(planes)
+
+```
+
+## Numeric Variables  
+
+Plot a histogram of arrival delays and departure delays 
+
+```{r} clean up NA & plot histograms
+##removing NA from data set
+dep_delay <- na.omit(flights$dep_delay) 
+
+hist(dep_delay,breaks=100,xlim=c(-50,500),xlab="departure delay",main="histogram of departure delay")
+## to see the impact of the long tail
+hist(dep_delay,breaks=100,xlim=c(-50,500),xlab="departure delay",main="histogram of departure delay",ylim=c(0,200))
+
+##removing NA from data set
+arr_delay <- na.omit(flights$arr_delay) 
+
+hist(arr_delay,breaks=100,xlim=c(-100,500),xlab="arrival delay",main="histogram of arrival delay")
+## to see the impact of the long tail
+hist(arr_delay,breaks=100,xlab="arrival delay",main="histogram of arrival delay",ylim=c(0,400))
+
+```
+
+## Scatterplot
+
+Plot a scatterplot of date vs arrival delay 
+
+```{r} 
+
+flights$date <- as.Date(with(flights, paste(year, month, day,sep="-")), "%Y-%m-%d")
+ggplot(flights, aes(flights$date, arr_delay)) +geom_point()
+
+```
+
+## Create tables for Categorical Variables
+
+Create a `table`, counting the flights by origin airports and carrier.
+
+```{r} counting flights by origin & carrier
+
+flight_origin <- flights %>% group_by(origin, carrier) %>% summarize(total.count=n())
+head(flight_origin)
+
+```
+
+
+## Join Data
+
+**Read** in the other data sets. Use methods to join the data together to create a single table containing one record per row.  (HINT: see `?data.table` or `?dplyr::join`)
+
+```{r}  
+
+data_join <- flights %>%
+  transform(dephour = floor(dep_time / 100)) %>%
+  inner_join(.,planes, by=c("tailnum" = "tailnum")) %>% 
+  inner_join(.,airports,by=c("origin"="faa"))  %>%
+  inner_join(.,airports,by=c("dest"="faa")) %>%
+  inner_join(.,weather, by=c("origin"="origin","dephour"="hour","year.x"="year","month"="month","day"="day")) 
+head(data_join)
+
+fit <- lm(formula= arr_delay ~ +carrier +flight +time_hour.x +model + engines +origin +dest, data=data_join)
+summary(fit)
+
+fit <- lm(formula= arr_delay ~ +sched_dep_time +dep_time +dep_delay +carrier +flight +time_hour.x +model + engines +origin +dest, data=data_join)
+
+summary(fit)
+
+
+```
+
+Is this a good model?  (Write your answer here.)
+
+It is a good model with an adjusted R-Square = 0.84, only 16% of the error are not answered by the model. 
